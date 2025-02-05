@@ -2,7 +2,7 @@ import re
 
 # Define patterns for tokens
 patterns = [
-    [r"\d+", "number"],
+    [r"\d*\.\d+|\d+\.\d*|\d+", "number"],
     [r"\+", "+"],
     [r"\-", "-"],
     [r"\*", "*"],
@@ -34,7 +34,10 @@ def tokenize(characters):
             "value":match.group(0)
         }
         if token["tag"] == "number":
-            token["value"] = int(token["value"])
+            if "." in token["value"]:
+                token["value"] = float(token["value"])
+            else:
+                token["value"] = int(token["value"])
         if token["tag"] != "whitespace":
             tokens.append(token)
         position = match.end()
@@ -62,7 +65,13 @@ def test_number_token():
         assert len(t) == 2
         assert t[0]["tag"] == "number"
         assert t[0]["value"] == int(s)
-    
+    for s in ["1.1","11.11","11.",".11"]:
+        t = tokenize(s)
+        assert len(t) == 2
+        assert t[0]["tag"] == "number"
+        assert t[0]["value"] == float(s)
+
+
 def test_multiple_tokens():
     print("test multiple tokens")
     tokens = tokenize("1+2")
