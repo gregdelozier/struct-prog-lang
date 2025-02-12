@@ -16,11 +16,15 @@ def evaluate(ast, environment={}):
     if ast["tag"] == "identifier":
         if ast["value"] in environment:
             return environment[ast["value"]]
-        else:
-            raise Exception(f"Value {ast["value"]} not found in environment.")
+        parent_environment = environment
+        while "$parent" in parent_environment:
+            parent_environment = environment["$parent"]
+            if ast["value"] in parent_environment:
+                return parent_environment[ast["value"]]
+        raise Exception(f"Value [{ast["value"]}] not found in environment {environment}.")
     if ast["tag"] in ["+", "-", "*", "/"]:
-        left_value = evaluate(ast["left"])
-        right_value = evaluate(ast["right"])
+        left_value = evaluate(ast["left"], environment)
+        right_value = evaluate(ast["right"], environment)
         if ast["tag"] == "+":
             return left_value + right_value
         if ast["tag"] == "-":
@@ -70,10 +74,10 @@ def test_evaluate_division():
         }
     assert evaluate(ast) == 2
 
-def eval(s):
+def eval(s, environment={}):
     tokens = tokenize(s)
     ast = parse(tokens)
-    result = evaluate(ast)
+    result = evaluate(ast, environment)
     return result
 
 def test_evaluate_expression():
@@ -86,8 +90,14 @@ def test_evaluate_expression():
 
 def test_evaluate_identifier():
     print("testing evaluate identifier")
-    assert eval("x+3") == 6
-    #TODO -- implement this test
+    try:
+        assert eval("x+3") == 6
+        raise Exception("Error expected for missing value in environment")
+    except Exception as e:
+        assert "not found" in str(e) 
+    assert eval("x+3", {"x":3}) == 6
+    assert eval("x+y",{"x":4,"y":5}) == 9
+    assert eval("x+y",{"$parent":{"x":4},"y":5}) == 9
 
 def test_evaluate_print():
     print("testing evaluate print")
