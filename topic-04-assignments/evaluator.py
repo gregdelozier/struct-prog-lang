@@ -46,6 +46,45 @@ def evaluate(ast, environment={}):
             return left_value * right_value
         if ast["tag"] == "/":
             return left_value / right_value
+    if ast["tag"] == "negate":
+        value = evaluate(ast["value"], environment)
+        return -value
+    if ast["tag"] == "&&":
+        left_value = evaluate(ast["left"], environment)
+        right_value = evaluate(ast["right"], environment)
+        return left_value and right_value
+    if ast["tag"] == "||":
+        left_value = evaluate(ast["left"], environment)
+        right_value = evaluate(ast["right"], environment)
+        return left_value or right_value
+    if ast["tag"] == "!":
+        value = evaluate(ast["value"], environment)
+        return not value
+    if ast["tag"] == "<":
+        left_value = evaluate(ast["left"], environment)
+        right_value = evaluate(ast["right"], environment)
+        return left_value < right_value
+    if ast["tag"] == ">":
+        left_value = evaluate(ast["left"], environment)
+        right_value = evaluate(ast["right"], environment)
+        return left_value > right_value
+    if ast["tag"] == "<=":
+        left_value = evaluate(ast["left"], environment)
+        right_value = evaluate(ast["right"], environment)
+        return left_value <= right_value
+    if ast["tag"] == ">=":
+        left_value = evaluate(ast["left"], environment)
+        right_value = evaluate(ast["right"], environment)
+        return left_value >= right_value
+    if ast["tag"] == "==":
+        left_value = evaluate(ast["left"], environment)
+        right_value = evaluate(ast["right"], environment)
+        return left_value == right_value
+    if ast["tag"] == "!=":
+        left_value = evaluate(ast["left"], environment)
+        right_value = evaluate(ast["right"], environment)
+        return left_value != right_value
+
 
 def test_evaluate_number():
     print("testing evaluate number")
@@ -99,6 +138,35 @@ def test_evaluate_expression():
     assert eval("1+2*3") == 7
     assert eval("(1+2)*3") == 9
     assert eval("(1.0+2.1)*3") == 9.3
+    assert eval("1<2") == True
+    assert eval("2<1") == False
+    assert eval("2>1") == True
+    assert eval("1>2") == False
+    assert eval("1<=2") == True
+    assert eval("2<=2") == True
+    assert eval("2<=1") == False
+    assert eval("2>=1") == True
+    assert eval("2>=2") == True
+    assert eval("1>=2") == False
+    assert eval("2==2") == True
+    assert eval("1==2") == False
+    assert eval("2!=1") == True
+    assert eval("1!=1") == False
+    # tokens = tokenize("-1")
+    # ast = parse(tokens)
+    # result = evaluate(ast, {})
+    # print(ast, result)
+    # exit(0)
+
+    assert eval("-1") == -1
+    assert eval("-(1)") == -1
+    assert eval("!1") == False
+    assert eval("!0") == True
+    assert eval("0&&1") == False
+    assert eval("1&&1") == True
+    assert eval("1||1") == True
+    assert eval("0||1") == True
+    assert eval("0||0") == False
 
 
 def test_evaluate_identifier():
