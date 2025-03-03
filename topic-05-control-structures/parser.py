@@ -11,10 +11,11 @@ Accept a string of tokens, return an AST expressed as stack of dictionaries
     term = factor { "*"|"/" factor }
     arithmetic_expression = term { "+"|"-" term }
     relational_expression = arithmetic_expression { ("<" | ">" | "<=" | ">=" | "==" | "!=") arithmetic_expression } ;
-    # logical_factor = relational_expression ;
-    # logical_term = logical_factor { "&&" logical_factor } ;
-    # logical_expression = logical_term { "||" logical_term } ;
-    # expression = logical_expression; 
+    logical_factor = relational_expression ;
+    logical_term = logical_factor { "&&" logical_factor } ;
+    logical_expression = logical_term { "||" logical_term } ;
+    expression = logical_expression; 
+    statement_block = "{" statement { ";" statement } "}"
     assignment_statement = expression [ "=" expression ]
     statement = <print> expression | if_statement | assignment_statement
     program = [ statement { ";" statement } ]
@@ -352,6 +353,9 @@ def parse_statement_block(tokens):
     return ast, tokens[1:]
 
 def test_parse_statement_block():
+    """
+    statement_block = "{" statement { ";" statement } "}"
+    """ 
     ast = parse_statement_block(tokenize("{}"))[0]
     assert ast == {'tag': 'block', 'statements': []}
     ast = parse_statement_block(tokenize("{i=2}"))[0]
