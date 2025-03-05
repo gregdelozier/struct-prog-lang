@@ -11,11 +11,26 @@ def evaluate(ast, environment={}):
             value = evaluate(statement, environment)
             last_value = value
         return last_value
+    if ast["tag"] == "block":
+        for statement in ast["statements"]:
+            _ = evaluate(statement, environment)
     if ast["tag"] == "print":
-        value = evaluate(ast["value"])
+        value = evaluate(ast["value"], environment)
         s = str(value)
         print(s)
         printed_string = s
+        return None
+    if ast["tag"] == "if":
+        condition_value = evaluate(ast["condition"], environment)
+        if condition_value:
+            evaluate(ast["then"], environment)
+        else:
+            if ast["else"]:
+                evaluate(ast["else"], environment)
+        return None
+    if ast["tag"] == "while":
+        while evaluate(ast["condition"], environment):
+            evaluate(ast["do"], environment)
         return None
     if ast["tag"] == "assign":
         target = ast["target"]
@@ -193,6 +208,22 @@ def test_evaluate_assignment():
     assert eval("x=7",env) == 7
     assert env["x"] == 7
 
+def test_if_statement():
+    print("testing if statement")
+    env = {"x":4,"y":5}
+    assert eval("if(1){x=8}",env) == None
+    assert env["x"] == 8
+    assert eval("if(0){x=5}else{y=9}",env) == None
+    assert env["x"] == 8
+    assert env["y"] == 9
+
+def test_while_statement():
+    print("testing while statement")
+    env = {"x":4,"y":5}
+    assert eval("while(x<6){y=y+1;x=x+1}",env) == None
+    assert env["x"] == 6
+    assert env["y"] == 7
+
 if __name__ == "__main__":
     test_evaluate_number()
     test_evaluate_addition()
@@ -202,4 +233,6 @@ if __name__ == "__main__":
     test_evaluate_expression()
     test_evaluate_print()
     test_evaluate_identifier()
+    test_if_statement()
+    test_while_statement()
     print("done.")
