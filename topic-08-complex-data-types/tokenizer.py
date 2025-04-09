@@ -11,11 +11,12 @@ patterns = [
     [r"function","function"],
     [r"return","return"],
     [r"assert","assert"],
-    [r"and","&&"],
-    [r"or","||"],
-    [r"not","!"],
+    [r"and","and"],
+    [r"or","or"],
+    [r"not","not"],
     [r"\d*\.\d+|\d+\.\d*|\d+", "number"],
     [r"[a-zA-Z_][a-zA-Z0-9_]*", "identifier"],  # identifiers
+    [r'"([^"\\]|\\[tn"\\])*"', "string"], # strings
     [r"\+", "+"],
     [r"\-", "-"],
     [r"\*", "*"],
@@ -30,15 +31,16 @@ patterns = [
     [r">", ">"],
     [r"\=", "="],
     [r"\;", ";"],
-    [r"\&\&", "&&"],
-    [r"\|\|", "||"],
-    [r"\!", "!"],
     [r"\{", "{"],
     [r"\}", "}"],
     [r"\[", "["],
     [r"\]", "]"],
     [r"\.", "."],
     [r"\,", ","],
+    [r"\:", ":"],
+    [r"\&\&", "and"],
+    [r"\|\|", "or"],
+    [r"\!", "not"],
     [r"\s+","whitespace"],
     [r".","error"]
 ]
@@ -68,6 +70,14 @@ def tokenize(characters):
                 token["value"] = float(token["value"])
             else:
                 token["value"] = int(token["value"])
+        if token["tag"] == "string":
+            value = token["value"]
+            value = value[1:-1]
+            value = value.replace("\\t","\t")
+            value = value.replace("\\n","\n")
+            value = value.replace('\\"','"')
+            value = value.replace('\\\\','\\')
+            token["value"] = value
         if token["tag"] != "whitespace":
             tokens.append(token)
         position = match.end()
@@ -81,19 +91,24 @@ def tokenize(characters):
 
 def test_simple_token():
     print("test simple token")
-    examples = "+-*/()=;<>{}[].,"
-    for example in examples:
-        print(example)
-        t = tokenize(example)[0]
-        assert t["tag"] == example
-        assert t["position"] == 0
-        assert t["value"] == example
-    examples = "==\t!=\t<=\t>=\t&&\t||\t!".split("\t")
+    examples = "+-*/()=;<>{}[].,:"
     for example in examples:
         t = tokenize(example)[0]
         assert t["tag"] == example
         assert t["position"] == 0
         assert t["value"] == example
+    examples = "==\t!=\t<=\t>=".split("\t")
+    for example in examples:
+        t = tokenize(example)[0]
+        assert t["tag"] == example
+        assert t["position"] == 0
+        assert t["value"] == example
+    for pair in [("!","not"),("&&","and"),("||","or")]:
+        token, result = pair
+        t = tokenize(token)[0]
+        assert t["tag"] == result
+        assert t["position"] == 0
+        assert t["value"] == token    
 
 def test_number_token():
     print("test number tokens")
@@ -108,6 +123,23 @@ def test_number_token():
         assert t[0]["tag"] == "number"
         assert t[0]["value"] == float(s)
 
+def test_string_token():
+    print("test string token")
+    tokens = tokenize("\"abc\"")
+    assert tokens[0]["tag"] == "string"
+    assert tokens[0]["value"] == "abc"
+    tokens = tokenize("\"ab\\\"c\"")
+    assert tokens[0]["tag"] == "string"
+    assert tokens[0]["value"] == "ab\"c"
+    tokens = tokenize("\"ab\\nc\"")
+    assert tokens[0]["tag"] == "string"
+    assert tokens[0]["value"] == "ab\nc"
+    tokens = tokenize("\"ab\\tc\"")
+    assert tokens[0]["tag"] == "string"
+    assert tokens[0]["value"] == "ab\tc"
+    tokens = tokenize("\"ab\\\\c\"")
+    assert tokens[0]["tag"] == "string"
+    assert tokens[0]["value"] == "ab\\c"
 
 def test_multiple_tokens():
     print("test multiple tokens")
@@ -122,7 +154,7 @@ def test_whitespace():
 def test_keywords():
     print("test keywords...")
     for keyword in [
-        "print","if","else","while","continue","break","return","assert","function"
+        "print","if","else","while","continue","break","return","assert","function","not","and","or"
     ]:
         t = tokenize(keyword)
         assert len(t) == 2
@@ -137,8 +169,6 @@ def test_identifier_tokens():
         assert t[0]["tag"] == "identifier"
         assert t[0]["value"] == s
 
-
-
 def test_error():
     print("test error")
     try:
@@ -150,6 +180,7 @@ def test_error():
 if __name__ == "__main__":
     test_simple_token()
     test_number_token()
+    test_string_token()
     test_multiple_tokens()
     test_whitespace()
     test_keywords()
